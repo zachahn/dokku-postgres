@@ -40,23 +40,24 @@ teardown() {
 
 @test "($PLUGIN_COMMAND_PREFIX:promote) changes DATABASE_URL" {
   password="$(sudo cat "$PLUGIN_DATA_ROOT/l/PASSWORD")"
-  dokku config:set my-app "DATABASE_URL=postgres://u:p@host:5432/db" "DOKKU_POSTGRES_BLUE_URL=postgres://postgres:$password@dokku-postgres-l:5432/l"
+  dokku config:set my-app "DATABASE_URL=postgres://u:p@host:5432/db" "DOKKU_POSTGRES_BLUE_URL=postgres://postgres:$password@dokku-bitnami-postgres-l:5432/l"
   dokku "$PLUGIN_COMMAND_PREFIX:promote" l my-app
   url=$(dokku config:get my-app DATABASE_URL)
-  assert_equal "$url" "postgres://postgres:$password@dokku-postgres-l:5432/l"
+  assert_equal "$url" "postgres://postgres:$password@dokku-bitnami-postgres-l:5432/l"
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:promote) creates new config url when needed" {
   password="$(sudo cat "$PLUGIN_DATA_ROOT/l/PASSWORD")"
-  dokku config:set my-app "DATABASE_URL=postgres://u:p@host:5432/db" "DOKKU_POSTGRES_BLUE_URL=postgres://postgres:$password@dokku-postgres-l:5432/l"
+  dokku config:set my-app "DATABASE_URL=postgres://u:p@host:5432/db" "DOKKU_BITNAMI_POSTGRES_BLUE_URL=postgres://postgres:$password@dokku-bitnami-postgres-l:5432/l"
   dokku "$PLUGIN_COMMAND_PREFIX:promote" l my-app
   run dokku config my-app
-  assert_contains "${lines[*]}" "DOKKU_POSTGRES_"
+  assert_contains "${lines[*]}" "DOKKU_BITNAMI_POSTGRES_"
 }
-@test "($PLUGIN_COMMAND_PREFIX:promote) uses POSTGRES_DATABASE_SCHEME variable" {
+
+@test "($PLUGIN_COMMAND_PREFIX:promote) uses BITNAMI_POSTGRES_DATABASE_SCHEME variable" {
   password="$(sudo cat "$PLUGIN_DATA_ROOT/l/PASSWORD")"
-  dokku config:set my-app "POSTGRES_DATABASE_SCHEME=postgres2" "DATABASE_URL=postgres://u:p@host:5432/db" "DOKKU_POSTGRES_BLUE_URL=postgres2://postgres:$password@dokku-postgres-l:5432/l"
+  dokku config:set my-app "BITNAMI_POSTGRES_DATABASE_SCHEME=postgres2" "DATABASE_URL=postgres://u:p@host:5432/db" "DOKKU_BITNAMI_POSTGRES_BLUE_URL=postgres2://postgres:$password@dokku-bitnami-postgres-l:5432/l"
   dokku "$PLUGIN_COMMAND_PREFIX:promote" l my-app
   url=$(dokku config:get my-app DATABASE_URL)
-  assert_contains "$url" "postgres2://postgres:$password@dokku-postgres-l:5432/l"
+  assert_contains "$url" "postgres2://postgres:$password@dokku-bitnami-postgres-l:5432/l"
 }

@@ -570,7 +570,7 @@ service_info() {
   local flag_map=(
     "--config-dir: ${SERVICE_ROOT}/${PLUGIN_CONFIG_SUFFIX}"
     "--config-options: $(cat "$SERVICE_ROOT/CONFIG_OPTIONS" 2>/dev/null || true)"
-    "--data-dir: ${SERVICE_ROOT}/data"
+    "--data-dir: ${SERVICE_ROOT}/persistence"
     "--dsn: ${SERVICE_URL}"
     "--exposed-ports: $(service_exposed_ports "$SERVICE")"
     "--id: ${SERVICE_CONTAINER_ID}"

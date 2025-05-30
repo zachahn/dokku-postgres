@@ -1,4 +1,4 @@
 [plugin]
-description = "dokku postgres service plugin"
-version = "1.44.0"
+description = "dokku bitnami postgres service plugin"
+version = "0.0.1"
 [plugin.config]

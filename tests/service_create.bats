@@ -32,3 +32,16 @@ teardown() {
   run dokku "$PLUGIN_COMMAND_PREFIX:create" d.erp
   assert_failure
 }
+
+@test "($PLUGIN_COMMAND_PREFIX:create) SSL enabled by default" {
+  run dokku "$PLUGIN_COMMAND_PREFIX:create" l
+  assert_contains "${lines[*]}" "Securing connection to database"
+  test -f /var/lib/dokku/services/bitnami-postgres/l/persistence/dokku-certs/server.crt
+  test -f /var/lib/dokku/services/bitnami-postgres/l/persistence/dokku-certs/server.key
+}
+
+@test "($PLUGIN_COMMAND_PREFIX:create) SSL disabled" {
+  run env POSTGRESQL_ENABLE_TLS=no dokku "$PLUGIN_COMMAND_PREFIX:create" l
+  test ! -f /var/lib/dokku/services/bitnami-postgres/l/persistence/dokku-certs/server.crt
+  test ! -f /var/lib/dokku/services/bitnami-postgres/l/persistence/dokku-certs/server.key
+}

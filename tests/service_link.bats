@@ -62,7 +62,7 @@ teardown() {
   echo "status: $status"
   url=$(dokku config:get my-app DATABASE_URL)
   password="$(sudo cat "$PLUGIN_DATA_ROOT/ls/PASSWORD")"
-  assert_contains "$url" "postgres://postgres:$password@dokku-postgres-ls:5432/ls"
+  assert_contains "$url" "postgres://postgres:$password@dokku-bitnami-postgres-ls:5432/ls"
   assert_success
   dokku "$PLUGIN_COMMAND_PREFIX:unlink" ls my-app
 }
@@ -71,12 +71,12 @@ teardown() {
   dokku config:set my-app DATABASE_URL=postgres://user:pass@host:5432/db
   dokku "$PLUGIN_COMMAND_PREFIX:link" ls my-app
   run dokku config my-app
-  assert_contains "${lines[*]}" "DOKKU_POSTGRES_AQUA_URL"
+  assert_contains "${lines[*]}" "DOKKU_BITNAMI_POSTGRES_AQUA_URL"
   assert_success
 
   dokku "$PLUGIN_COMMAND_PREFIX:link" ms my-app
   run dokku config my-app
-  assert_contains "${lines[*]}" "DOKKU_POSTGRES_BLACK_URL"
+  assert_contains "${lines[*]}" "DOKKU_BITNAMI_POSTGRES_BLACK_URL"
   assert_success
   dokku "$PLUGIN_COMMAND_PREFIX:unlink" ms my-app
   dokku "$PLUGIN_COMMAND_PREFIX:unlink" ls my-app
@@ -85,17 +85,17 @@ teardown() {
 @test "($PLUGIN_COMMAND_PREFIX:link) links to app with docker-options" {
   dokku "$PLUGIN_COMMAND_PREFIX:link" ls my-app
   run dokku docker-options:report my-app
-  assert_contains "${lines[*]}" "--link dokku.postgres.ls:dokku-postgres-ls"
+  assert_contains "${lines[*]}" "--link dokku.bitnami-postgres.ls:dokku-bitnami-postgres-ls"
   assert_success
   dokku "$PLUGIN_COMMAND_PREFIX:unlink" ls my-app
 }
 
-@test "($PLUGIN_COMMAND_PREFIX:link) uses apps POSTGRES_DATABASE_SCHEME variable" {
-  dokku config:set my-app POSTGRES_DATABASE_SCHEME=postgres2
+@test "($PLUGIN_COMMAND_PREFIX:link) uses apps BITNAMI_POSTGRES_DATABASE_SCHEME variable" {
+  dokku config:set my-app BITNAMI_POSTGRES_DATABASE_SCHEME=postgres2
   dokku "$PLUGIN_COMMAND_PREFIX:link" ls my-app
   url=$(dokku config:get my-app DATABASE_URL)
   password="$(sudo cat "$PLUGIN_DATA_ROOT/ls/PASSWORD")"
-  assert_contains "$url" "postgres2://postgres:$password@dokku-postgres-ls:5432/ls"
+  assert_contains "$url" "postgres2://postgres:$password@dokku-bitnami-postgres-ls:5432/ls"
   assert_success
   dokku "$PLUGIN_COMMAND_PREFIX:unlink" ls my-app
 }
@@ -112,7 +112,7 @@ teardown() {
   dokku "$PLUGIN_COMMAND_PREFIX:link" ls my-app --alias "ALIAS"
   url=$(dokku config:get my-app ALIAS_URL)
   password="$(sudo cat "$PLUGIN_DATA_ROOT/ls/PASSWORD")"
-  assert_contains "$url" "postgres://postgres:$password@dokku-postgres-ls:5432/ls"
+  assert_contains "$url" "postgres://postgres:$password@dokku-bitnami-postgres-ls:5432/ls"
   assert_success
   dokku "$PLUGIN_COMMAND_PREFIX:unlink" ls my-app
 }

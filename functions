@@ -43,7 +43,7 @@ service_create() {
 
   plugn trigger service-action pre-create "$PLUGIN_COMMAND_PREFIX" "$SERVICE"
   mkdir -p "$SERVICE_ROOT" || dokku_log_fail "Unable to create service directory"
-  mkdir -p "$SERVICE_ROOT/data" || dokku_log_fail "Unable to create service data directory"
+  mkdir -p "$SERVICE_ROOT/persistence" || dokku_log_fail "Unable to create service persistence directory"
   touch "$LINKS_FILE"
 
   PASSWORD=$(openssl rand -hex 16)
@@ -81,13 +81,14 @@ service_create_container() {
   DOCKER_ARGS=()
   DOCKER_ARGS+=("--cidfile=$SERVICE_ROOT/ID")
   DOCKER_ARGS+=("--env-file=$SERVICE_ROOT/ENV")
-  DOCKER_ARGS+=("--env=POSTGRES_PASSWORD=$PASSWORD")
+  DOCKER_ARGS+=("--env=POSTGRESQL_DATABASE=$DATABASE_NAME")
+  DOCKER_ARGS+=("--env=POSTGRESQL_PASSWORD=$PASSWORD")
   DOCKER_ARGS+=("--hostname=$SERVICE_NAME")
   DOCKER_ARGS+=("--label=dokku.service=$PLUGIN_COMMAND_PREFIX")
   DOCKER_ARGS+=("--label=dokku=service")
   DOCKER_ARGS+=("--name=$SERVICE_NAME")
   DOCKER_ARGS+=("--restart=always")
-  DOCKER_ARGS+=("--volume=$SERVICE_HOST_ROOT/data:/var/lib/postgresql/data")
+  DOCKER_ARGS+=("--volume=$SERVICE_HOST_ROOT/persistence:/bitnami/postgresql")
 
   declare -a LINK_CONTAINER_DOCKER_ARGS
   LINK_CONTAINER_DOCKER_ARGS=()
@@ -116,6 +117,18 @@ service_create_container() {
   fi
 
   # shellcheck disable=SC2086
+  [[ ! -d "$SERVICE_HOST_ROOT/persistence/dokku-certs" ]] && mkdir "$SERVICE_HOST_ROOT/persistence/dokku-certs"
+  if [[ "$POSTGRESQL_ENABLE_TLS" == "" || "$POSTGRESQL_ENABLE_TLS" == "yes" ]]; then
+    dokku_log_verbose_quiet "Securing connection to database"
+    "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scripts/create_ssl_certs.sh" "$SERVICE_HOST_ROOT/persistence/dokku-certs" &>/dev/null
+    chmod 600 "$SERVICE_HOST_ROOT/persistence/dokku-certs/server.crt"
+    chmod 600 "$SERVICE_HOST_ROOT/persistence/dokku-certs/server.key"
+    DOCKER_ARGS+=("--env=POSTGRESQL_ENABLE_TLS=yes")
+    DOCKER_ARGS+=("--env=POSTGRESQL_TLS_CERT_FILE=/bitnami/postgresql/dokku-certs/server.crt")
+    DOCKER_ARGS+=("--env=POSTGRESQL_TLS_KEY_FILE=/bitnami/postgresql/dokku-certs/server.key")
+  fi
+
+  chown -R 1001:1001 "$SERVICE_HOST_ROOT/persistence"
   suppress_output "$DOCKER_BIN" container create "${DOCKER_ARGS[@]}" "$PLUGIN_IMAGE:$PLUGIN_IMAGE_VERSION" $CONFIG_OPTIONS
 
   if [[ -n "$(fn-plugin-property-get "$PLUGIN_COMMAND_PREFIX" "$SERVICE" "post-create-network")" ]]; then
@@ -143,15 +156,6 @@ service_create_container() {
     dokku_log_info2_quiet "End of $SERVICE container output"
     return 1
   fi
-
-  dokku_log_verbose_quiet "Creating container database"
-  "$DOCKER_BIN" container exec "$SERVICE_NAME" su - postgres -c "createdb -E utf8 $DATABASE_NAME" 2>/dev/null || dokku_log_verbose_quiet 'Already exists'
-
-  dokku_log_verbose_quiet "Securing connection to database"
-  service_pause "$SERVICE" >/dev/null
-  "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scripts/create_ssl_certs.sh" "$SERVICE_ROOT" &>/dev/null
-  "$DOCKER_BIN" container run --rm -i -v "$SERVICE_HOST_ROOT/data:/var/lib/postgresql/data" -v "$SERVICE_HOST_ROOT/certs:/var/lib/postgresql/certs" "$PLUGIN_IMAGE:$PLUGIN_IMAGE_VERSION" bash -s <"$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scripts/enable_ssl.sh" &>/dev/null
-  rm -rf "$SERVICE_HOST_ROOT/certs"
 
   suppress_output "$DOCKER_BIN" container start "$(cat "$SERVICE_ROOT/ID")"
   service_port_reconcile_status "$SERVICE"
