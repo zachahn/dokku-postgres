@@ -1,10 +1,19 @@
 #!/usr/bin/env bats
 load test_helper
 
+setup() {
+  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" l || true
+  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" service-with-dashes || true
+}
+
+teardown() {
+  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" l || true
+  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" service-with-dashes || true
+}
+
 @test "($PLUGIN_COMMAND_PREFIX:create) success" {
   run dokku "$PLUGIN_COMMAND_PREFIX:create" l
   assert_contains "${lines[*]}" "container created: l"
-  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" l
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:create) service with dashes" {
@@ -12,8 +21,6 @@ load test_helper
   assert_contains "${lines[*]}" "container created: service-with-dashes"
   assert_contains "${lines[*]}" "dokku-$PLUGIN_COMMAND_PREFIX-service-with-dashes"
   assert_contains "${lines[*]}" "service_with_dashes"
-
-  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" service-with-dashes
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:create) error when there are no arguments" {

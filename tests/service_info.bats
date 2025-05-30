@@ -6,7 +6,8 @@ setup() {
 }
 
 teardown() {
-  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" l
+  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" l || true
+  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" test_with_underscores || true
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:info) error when there are no arguments" {

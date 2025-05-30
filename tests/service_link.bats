@@ -2,15 +2,15 @@
 load test_helper
 
 setup() {
-  dokku "$PLUGIN_COMMAND_PREFIX:create" ls
-  dokku "$PLUGIN_COMMAND_PREFIX:create" ms
-  dokku apps:create my-app
+  dokku "$PLUGIN_COMMAND_PREFIX:create" ls || true
+  dokku "$PLUGIN_COMMAND_PREFIX:create" ms || true
+  dokku apps:create my-app || true
 }
 
 teardown() {
-  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" ms
-  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" ls
-  dokku --force apps:destroy my-app
+  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" ms || true
+  dokku --force "$PLUGIN_COMMAND_PREFIX:destroy" ls || true
+  dokku --force apps:destroy my-app || true
 }
 
 @test "($PLUGIN_COMMAND_PREFIX:link) error when there are no arguments" {
