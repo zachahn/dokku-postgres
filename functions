@@ -128,7 +128,7 @@ service_create_container() {
     DOCKER_ARGS+=("--env=POSTGRESQL_TLS_KEY_FILE=/bitnami/postgresql/dokku-certs/server.key")
   fi
 
-  chown -R 1001:1001 "$SERVICE_HOST_ROOT/persistence"
+  sudo chown -R 1001:1001 "$SERVICE_HOST_ROOT/persistence"
   suppress_output "$DOCKER_BIN" container create "${DOCKER_ARGS[@]}" "$PLUGIN_IMAGE:$PLUGIN_IMAGE_VERSION" $CONFIG_OPTIONS
 
   if [[ -n "$(fn-plugin-property-get "$PLUGIN_COMMAND_PREFIX" "$SERVICE" "post-create-network")" ]]; then
